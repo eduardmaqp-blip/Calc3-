@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORB Калькулятор</title>
+<style>
+  
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #ff6b35;
+    --accent3: #4fc3f7;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --danger: #ff4757;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  h1 {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .instrument-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .tab.active[data-inst="ES"] { border-color: var(--accent); color: var(--accent); background: rgba(0,255,136,0.05); }
+  .tab.active[data-inst="NQ"] { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.05); }
+  .tab.active[data-inst="YM"] { border-color: var(--accent3); color: var(--accent3); background: rgba(79,195,247,0.05); }
+
+  .instrument-info {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .info-pill {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
+  .info-pill .label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+
+  .info-pill .value {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .input-group label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .input-with-unit {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .input-with-unit:focus-within {
+    border-color: var(--accent);
+  }
+
+  .input-with-unit input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    padding: 12px 14px;
+    outline: none;
+  }
+
+  .input-with-unit .unit {
+    padding: 12px 14px;
+    font-size: 11px;
+    color: var(--muted);
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .max-risk-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .risk-preset {
+    padding: 6px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .risk-preset:hover, .risk-preset.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .calc-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: opacity 0.2s;
+  }
+
+  .calc-btn:active { opacity: 0.8; }
+
+  .results {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .results.visible { display: block; }
+
+  .result-header {
+    padding: 12px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .result-cell {
+    background: var(--surface);
+    padding: 16px;
+  }
+
+  .result-cell .r-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .result-cell .r-value {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .result-cell .r-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .r-value.green { color: var(--accent); }
+  .r-value.orange { color: var(--accent2); }
+  .r-value.blue { color: var(--accent3); }
+  .r-value.danger { color: var(--danger); }
+
+  .warning-box {
+    display: none;
+    background: rgba(255,71,87,0.08);
+    border: 1px solid rgba(255,71,87,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 11px;
+    color: var(--danger);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .warning-box.visible { display: block; }
+
+  .ticks-section {
+    background: rgba(0,255,136,0.03);
+    border: 1px solid rgba(0,255,136,0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .ticks-title {
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+
+  .tick-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .tick-row:last-child { border-bottom: none; }
+
+  .tick-label { color: var(--muted); }
+
+  .tick-value {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .tick-value span {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  .rr-display {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .rr-card {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .rr-card .rr-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .rr-card .rr-val {
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .rr-card .rr-dollar {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<h1>ORB Калькулятор</h1>
+<p class="subtitle">ES · NQ · YM — Розрахунок позиції</p>
+
+<div class="instrument-tabs">
+  <div class="tab active" data-inst="ES" onclick="selectInstrument('ES')">ES/MES</div>
+  <div class="tab" data-inst="NQ" onclick="selectInstrument('NQ')">NQ/MNQ</div>
+  <div class="tab" data-inst="YM" onclick="selectInstrument('YM')">YM/MYM</div>
+</div>
+
+<div class="instrument-info">
+  <div class="info-pill">
+    <div class="label">Тік $</div>
+    <div class="value" id="tickVal" style="color:var(--accent)">$1.25</div>
+  </div>
+  <div class="info-pill">
+    <div class="label">Пункт $</div>
+    <div class="value" id="pointVal" style="color:var(--accent)">$5.00</div>
+  </div>
+  <div class="info-pill">
+    <div class="label">Тіків/пункт</div>
+    <div class="value" id="ticksPerPoint" style="color:var(--accent)">4</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Параметри угоди</div>
+  <div class="input-row">
+    <div class="input-group">
+      <label>Стоп-лосс (пункти)</label>
+      <div class="input-with-unit">
+        <input type="number" id="stopPoints" placeholder="напр. 15" min="0.25" step="0.25">
+        <span class="unit">пункти</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>Тейк-профіт (пункти)</label>
+      <div class="input-with-unit">
+        <input type="number" id="takeProfitPoints" placeholder="напр. 30" min="0.25" step="0.25">
+        <span class="unit">пункти</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>Максимальний ризик ($)</label>
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button class="risk-preset active" onclick="setRisk(150, this)">$150</button>
+        <button class="risk-preset" onclick="setRisk(200, this)">$200</button>
+        <button class="risk-preset" onclick="setRisk(250, this)">$250</button>
+      </div>
+      <div class="input-with-unit">
+        <input type="number" id="maxRisk" value="150" min="50" step="10">
+        <span class="unit">USD</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="calc-btn" onclick="calculate()">Розрахувати →</button>
+
+<div class="warning-box" id="warningBox"></div>
+
+<div class="results" id="results">
+  <div class="result-header">Результат розрахунку</div>
+  <div class="result-grid">
+    <div class="result-cell">
+      <div class="r-label">Мікро-контракти</div>
+      <div class="r-value green" id="microContracts">—</div>
+      <div class="r-sub" id="microSub">—</div>
+    </div>
+    <div class="result-cell">
+      <div class="r-label">Міні-контракти</div>
+      <div class="r-value orange" id="miniContracts">—</div>
+      <div class="r-sub" id="miniSub">—</div>
+    </div>
+    <div class="result-cell">
+      <div class="r-label">Реальний ризик</div>
+      <div class="r-value blue" id="realRisk">—</div>
+      <div class="r-sub">при мікро</div>
+    </div>
+    <div class="result-cell">
+      <div class="r-label">RR Ratio</div>
+      <div class="r-value" id="rrRatio">—</div>
+      <div class="r-sub" id="rrSub">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="ticks-section" id="ticksSection" style="display:none">
+  <div class="ticks-title">▸ Вводь в термінал Tradovate</div>
+  <div class="tick-row">
+    <span class="tick-label">Стоп-лосс</span>
+    <span class="tick-value" id="stopTicks">— <span>тіків</span></span>
+  </div>
+  <div class="tick-row">
+    <span class="tick-label">Тейк-профіт</span>
+    <span class="tick-value" id="tpTicks">— <span>тіків</span></span>
+  </div>
+  <div class="tick-row">
+    <span class="tick-label">Стоп в пунктах</span>
+    <span class="tick-value" id="stopPts">— <span>пунктів</span></span>
+  </div>
+  <div class="tick-row">
+    <span class="tick-label">Тейк в пунктах</span>
+    <span class="tick-value" id="tpPts">— <span>пунктів</span></span>
+  </div>
+</div>
+
+<script>
+const instruments = {
+  ES: { tickValue: 1.25, ticksPerPoint: 4, pointValue: 5, microName: 'MES', miniName: 'ES', color: 'var(--accent)' },
+  NQ: { tickValue: 0.50, ticksPerPoint: 4, pointValue: 2, microName: 'MNQ', miniName: 'NQ', color: 'var(--accent2)' },
+  YM: { tickValue: 0.50, ticksPerPoint: 1, pointValue: 0.50, microName: 'MYM', miniName: 'YM', color: 'var(--accent3)' }
+};
+
+// YM: 1 пункт = 1 тік = $0.50 мікро, $5 міні
+const instrumentsFixed = {
+  ES: { microTickVal: 1.25, miniTickVal: 12.50, ticksPerPoint: 4, microPointVal: 5, miniPointVal: 50, microName: 'MES', miniName: 'ES' },
+  NQ: { microTickVal: 0.50, miniTickVal: 5.00, ticksPerPoint: 4, microPointVal: 2, miniPointVal: 20, microName: 'MNQ', miniName: 'NQ' },
+  YM: { microTickVal: 0.50, miniTickVal: 5.00, ticksPerPoint: 1, microPointVal: 0.5, miniPointVal: 5, microName: 'MYM', miniName: 'YM' }
+};
+
+let currentInst = 'ES';
+
+function selectInstrument(inst) {
+  currentInst = inst;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[data-inst="${inst}"]`).classList.add('active');
+
+  const d = instrumentsFixed[inst];
+  document.getElementById('tickVal').textContent = `$${d.microTickVal.toFixed(2)}`;
+  document.getElementById('pointVal').textContent = `$${d.microPointVal.toFixed(2)}`;
+  document.getElementById('ticksPerPoint').textContent = d.ticksPerPoint;
+
+  const colors = { ES: 'var(--accent)', NQ: 'var(--accent2)', YM: 'var(--accent3)' };
+  ['tickVal','pointVal','ticksPerPoint'].forEach(id => {
+    document.getElementById(id).style.color = colors[inst];
+  });
+
+  document.getElementById('results').classList.remove('visible');
+  document.getElementById('ticksSection').style.display = 'none';
+  document.getElementById('warningBox').classList.remove('visible');
+}
+
+function setRisk(val, btn) {
+  document.getElementById('maxRisk').value = val;
+  document.querySelectorAll('.risk-preset').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function calculate() {
+  const stop = parseFloat(document.getElementById('stopPoints').value);
+  const tp = parseFloat(document.getElementById('takeProfitPoints').value);
+  const maxRisk = parseFloat(document.getElementById('maxRisk').value);
+
+  const warning = document.getElementById('warningBox');
+
+  if (!stop || stop <= 0) {
+    warning.textContent = '⚠ Введи розмір стоп-лоссу в пунктах.';
+    warning.classList.add('visible');
+    return;
+  }
+
+  warning.classList.remove('visible');
+
+  const d = instrumentsFixed[currentInst];
+
+  // Розрахунок мікро контрактів
+  const riskPerMicro = stop * d.microPointVal;
+  const microContracts = Math.floor(maxRisk / riskPerMicro);
+  const realRiskMicro = microContracts * riskPerMicro;
+
+  // Розрахунок міні контрактів
+  const riskPerMini = stop * d.miniPointVal;
+  const miniContracts = Math.floor(maxRisk / riskPerMini);
+  const realRiskMini = miniContracts > 0 ? miniContracts * riskPerMini : riskPerMini;
+
+  // Тіки
+  const stopTicks = stop * d.ticksPerPoint;
+  const tpTicks = tp ? tp * d.ticksPerPoint : null;
+
+  // RR
+  const rr = tp ? (tp / stop).toFixed(2) : null;
+  const tpDollarMicro = tp ? tp * d.microPointVal * microContracts : null;
+
+  // Відображення
+  document.getElementById('microContracts').textContent = microContracts > 0 ? microContracts : '0';
+  document.getElementById('microSub').textContent = microContracts > 0 ? `${d.microName} · ризик $${realRiskMicro.toFixed(0)}` : 'занадто великий стоп';
+
+  if (miniContracts > 0) {
+    document.getElementById('miniContracts').textContent = miniContracts;
+    document.getElementById('miniSub').textContent = `${d.miniName} · ризик $${realRiskMini.toFixed(0)}`;
+  } else {
+    document.getElementById('miniContracts').textContent = '—';
+    document.getElementById('miniSub').textContent = `1 ${d.miniName} = $${riskPerMini.toFixed(0)} ризик`;
+  }
+
+  document.getElementById('realRisk').textContent = `$${realRiskMicro.toFixed(0)}`;
+
+  if (rr) {
+    const rrVal = parseFloat(rr);
+    const rrEl = document.getElementById('rrRatio');
+    rrEl.textContent = `1:${rr}`;
+    rrEl.className = 'r-value ' + (rrVal >= 2 ? 'green' : rrVal >= 1.5 ? 'orange' : 'danger');
+    document.getElementById('rrSub').textContent = tpDollarMicro ? `TP = $${tpDollarMicro.toFixed(0)} (мікро)` : '';
+  } else {
+    document.getElementById('rrRatio').textContent = '—';
+    document.getElementById('rrSub').textContent = 'введи тейк';
+  }
+
+  // Попередження
+  if (microContracts === 0) {
+    warning.textContent = `⚠ При стопі ${stop}п і ризику $${maxRisk} — навіть 1 мікро контракт перевищує ліміт. Збільш максимальний ризик або зменш стоп.`;
+    warning.classList.add('visible');
+  }
+
+  if (miniContracts === 0 && riskPerMini > maxRisk) {
+    // вже показано в miniSub
+  }
+
+  // Тіки
+  document.getElementById('stopTicks').innerHTML = `${stopTicks} <span>тіків</span>`;
+  document.getElementById('tpTicks').innerHTML = tpTicks ? `${tpTicks} <span>тіків</span>` : `— <span>тіків</span>`;
+  document.getElementById('stopPts').innerHTML = `${stop} <span>пунктів</span>`;
+  document.getElementById('tpPts').innerHTML = tp ? `${tp} <span>пунктів</span>` : `— <span>пунктів</span>`;
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('ticksSection').style.display = 'block';
+}
+
+// Enter key
+document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+</script>
+</body>
+</html>
